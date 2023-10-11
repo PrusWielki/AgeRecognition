@@ -1,0 +1,5 @@
+opencv-python==4.8.1.78
+imageio==2.31.2
+pillow==9.5.0
+tkvideo==0.1
+tkvideoplayer==2.3
