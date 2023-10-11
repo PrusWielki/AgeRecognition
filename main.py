@@ -7,24 +7,48 @@ import cv2
 
 root = tk.Tk()
 videoPlayer = tk.Label(root)
+face_cascade = cv2.CascadeClassifier('haarsascade_frontalface_default.xml')
 
 def browse_video():
     file_path = filedialog.askopenfilename(filetypes=[("MP4 Files", "*.mp4")])
 
     return file_path
 
+def show_video(cap):
+    while True:
+        # Read the frame
+        _, img = cap.read()
+
+        # Convert to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # Detect the faces
+        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+
+        # Draw the rectangle around each face
+        for (x, y, w, h) in faces:
+            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+        # Display
+        cv2.imshow('img', img)
+
+        # Stop if escape key is pressed
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            break
+
+    # Release the VideoCapture object
+    cap.release()
+
 def AddVideoEvent():
     path = browse_video()
-    play_video(path)
-
-def play_video(file_path):
-    videoPlayer.pack()
-    player = tkvideo(file_path, videoPlayer, loop=1, size=(500, 500))
-    player.play()
+    cap = cv2.VideoCapture(path)
+    show_video(cap)
 
 
 def AddCameraEvent():
-    pass
+    cap = cv2.VideoCapture(0)
+    show_video(cap)
 
 def AddPhotosEvent():
     pass
