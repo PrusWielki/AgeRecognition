@@ -7,7 +7,7 @@ import cv2
 
 root = tk.Tk()
 videoPlayer = tk.Label(root)
-face_cascade = cv2.CascadeClassifier('haarsascade_frontalface_default.xml')
+face_cascade = cv2.CascadeClassifier('FaceRecognition/haarsascade_frontalface_default.xml')
 
 def browse_video():
     file_path = filedialog.askopenfilename(filetypes=[("MP4 Files", "*.mp4")])

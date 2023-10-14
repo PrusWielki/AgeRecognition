@@ -75,7 +75,7 @@ docs/_build/
 target/
 
 # Jupyter Notebook
-.ipynb_checkpoints
+FaceRecognition/.ipynb_checkpoints
 
 # IPython
 profile_default/
@@ -121,6 +121,8 @@ celerybeat.pid
 # Environments
 .env
 .venv
+my_env/
+bootcamp_env/
 env/
 venv/
 ENV/
