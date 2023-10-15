@@ -61,7 +61,7 @@ W katalogu, w którym się znajdujecie jest plik `requirements.txt`. Zawiera on 
 
 Przy aktywowanym środowisku należy wywołać komendę:
 ```
-(my_env) > ipython kernel install --user --name=bootcamp_env
+(my_env) > ipython kernel install --user --name=my_env
 ```
 Po tej operacji zostanie utworzony kernel jupytera dla środowiska wirtualnego.
 

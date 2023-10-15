@@ -39,6 +39,7 @@ def show_video(cap):
 
     # Release the VideoCapture object
     cap.release()
+    cv2.destroyAllWindows()
 
 def AddVideoEvent():
     path = browse_video()
