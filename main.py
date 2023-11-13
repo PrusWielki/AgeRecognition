@@ -2,12 +2,15 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.font as fnt
 from tkinter import filedialog
-from tkvideo import tkvideo
+import tensorflow as tf
+import numpy as np
 import cv2
+from tensorflow.keras.models import load_model
 
 root = tk.Tk()
 videoPlayer = tk.Label(root)
 face_cascade = cv2.CascadeClassifier('FaceRecognition/haarsascade_frontalface_default.xml')
+facetracker = load_model('FaceRecognition\\facetracker.keras')
 
 def browse_video():
     file_path = filedialog.askopenfilename(filetypes=[("MP4 Files", "*.mp4")])
@@ -15,29 +18,39 @@ def browse_video():
     return file_path
 
 def show_video(cap):
-    while True:
-        # Read the frame
-        _, img = cap.read()
+    while cap.isOpened():
+        _, frame = cap.read()
+        frame = frame[50:500, 50:500, :]
 
-        # Convert to grayscale
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        resized = tf.image.resize(rgb, (120, 120))
 
-        # Detect the faces
-        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+        yhat = facetracker.predict(np.expand_dims(resized / 255, 0))
+        sample_coords = yhat[1][0]
 
-        # Draw the rectangle around each face
-        for (x, y, w, h) in faces:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        if yhat[0] > 0.5:
+            # Controls the main rectangle
+            cv2.rectangle(frame,
+                          tuple(np.multiply(sample_coords[:2], [450, 450]).astype(int)),
+                          tuple(np.multiply(sample_coords[2:], [450, 450]).astype(int)),
+                          (255, 0, 0), 2)
+            # Controls the label rectangle
+            cv2.rectangle(frame,
+                          tuple(np.add(np.multiply(sample_coords[:2], [450, 450]).astype(int),
+                                       [0, -30])),
+                          tuple(np.add(np.multiply(sample_coords[:2], [450, 450]).astype(int),
+                                       [80, 0])),
+                          (255, 0, 0), -1)
 
-        # Display
-        cv2.imshow('img', img)
+            # Controls the text rendered
+            cv2.putText(frame, 'face', tuple(np.add(np.multiply(sample_coords[:2], [450, 450]).astype(int),
+                                                    [0, -5])),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
-        # Stop if escape key is pressed
-        k = cv2.waitKey(30) & 0xff
-        if k == 27:
+        cv2.imshow('EyeTrack', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
-    # Release the VideoCapture object
     cap.release()
     cv2.destroyAllWindows()
 
