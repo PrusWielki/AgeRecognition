@@ -6,7 +6,12 @@ import tensorflow as tf
 import numpy as np
 import cv2
 from tensorflow.keras.models import load_model
+from PIL import Image
+import os
+import shutil
+import copy
 
+customTracker = False
 root = tk.Tk()
 videoPlayer = tk.Label(root)
 face_cascade = cv2.CascadeClassifier('FaceRecognition/haarsascade_frontalface_default.xml')
@@ -27,36 +32,100 @@ def resize_frame(frame):
     frame = cv2.resize(frame, (new_size, new_size))
     return frame
 
+def detect_faces(image):
+    height, width, _ = image.shape
+
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Load the pre-trained Haar Cascade classifier for face detection
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    
+    # Detect faces in the image
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40))
+    
+    # Extract coordinates of each face
+    face_coordinates = []
+    for (x, y, w, h) in faces:
+        face_coordinates.append([x / width, y / height, (x + w) / width, (y + h) / height])
+    
+    return face_coordinates
+
+def save_images(image_array):
+    target_directory = "face_photos"
+    # Create the target directory if it doesn't exist
+    if not os.path.exists(target_directory):
+        os.makedirs(target_directory)
+    else:
+        # If the directory exists, delete all existing photos
+        file_list = os.listdir(target_directory)
+        for file_name in file_list:
+            file_path = os.path.join(target_directory, file_name)
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+
+    # Save the new images in the target directory
+    for i, image in enumerate(image_array):
+        Image.fromarray(image.astype(np.uint8)).save(os.path.join(target_directory, f"image_{i}.png"))
+
+def cut_photo(image, size, coordinates):
+    left, top, right, bottom = coordinates
+
+    height, width = size, size
+    left_pixel = int(left * width)
+    top_pixel = int(top * height)
+    right_pixel = int(right * width)
+    bottom_pixel = int(bottom * height)
+    
+    cropped_image = image[top_pixel:bottom_pixel, left_pixel:right_pixel, :]
+
+    return cropped_image
+
 def update_view(frame):
     frame = resize_frame(frame)
     size = len(frame)
 
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    start_frame = copy.deepcopy(rgb)
     resized = tf.image.resize(rgb, (120, 120))
 
-    yhat = facetracker.predict(np.expand_dims(resized / 255, 0))
-    sample_coords = yhat[1][0]
+    showFrame = True
+    images = []
+    faces = []
+    if customTracker:
+        yhat = facetracker.predict(np.expand_dims(resized / 255, 0))
+        faces.append(yhat[1][0])
+        showFrame = yhat[0] > 0.5
+    else:
+        faces = detect_faces(frame)
 
-    if yhat[0] > 0.5:
-        # Controls the main rectangle
-        cv2.rectangle(frame,
-                        tuple(np.multiply(sample_coords[:2], [size, size]).astype(int)),
-                        tuple(np.multiply(sample_coords[2:], [size, size]).astype(int)),
-                        (255, 0, 0), 2)
-        # Controls the label rectangle
-        cv2.rectangle(frame,
-                        tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
-                                    [0, -30])),
-                        tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
-                                    [80, 0])),
-                        (255, 0, 0), -1)
+    if showFrame:
+        for sample_coords in faces:
+            # Controls the main rectangle
+            cv2.rectangle(frame,
+                            tuple(np.multiply(sample_coords[:2], [size, size]).astype(int)),
+                            tuple(np.multiply(sample_coords[2:], [size, size]).astype(int)),
+                            (255, 0, 0), 2)
+            # Controls the label rectangle
+            cv2.rectangle(frame,
+                            tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
+                                        [0, -30])),
+                            tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
+                                        [80, 0])),
+                            (255, 0, 0), -1)
 
-        # Controls the text rendered
-        cv2.putText(frame, 'face', tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
-                                                [0, -5])),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            # Controls the text rendered
+            cv2.putText(frame, 'face', tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
+                                                    [0, -5])),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+            images.append(cut_photo(start_frame, size, sample_coords))
 
     cv2.imshow('EyeTrack', frame)
+
+    save_images(images)
 
 def show_video(cap):
     cv2.namedWindow('EyeTrack', cv2.WINDOW_NORMAL)
@@ -97,7 +166,17 @@ def AddPhotosEvent():
     path = browse_photos()
     show_photo(path)
 
+def ChangeTrackerState():
+    global customTracker
+    if customTracker:
+        button4.configure(text="Custom tracker off")
+        customTracker = False
+    else:
+        button4.configure(text="Custom tracker on")
+        customTracker = True
+
 def setup_main():
+    customTracker = False
     # Set the window title
     root.title("Age Detection")
 
@@ -118,7 +197,7 @@ def setup_main():
     button_frame = ttk.Frame(root)
     button_frame.pack()
 
-    # Create and pack three buttons in the frame
+    # Create and pack four buttons in the frame
     button1 = ttk.Button(button_frame, text="Add Video", command=AddVideoEvent)
     button1.grid(row=0, column=0, padx=10, pady=10)
 
@@ -128,10 +207,14 @@ def setup_main():
     button3 = ttk.Button(button_frame, text="Add Photos", command=AddPhotosEvent)
     button3.grid(row=0, column=2, padx=10, pady=10)
 
+    global button4
+    button4 = ttk.Button(button_frame, text="Custom tracker off", command=ChangeTrackerState)
+    button4.grid(row=0, column=3, padx=10, pady=10)
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     # Create the main application window
-
+    
     setup_main()
     # Start the Tkinter main loop
     root.mainloop()
