@@ -10,7 +10,7 @@ import time
 current_directory = os.getcwd()
 
 def __main__():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         print(f"length: {len(sys.argv)}, argv: {sys.argv}")
         usage()
         return
@@ -24,20 +24,20 @@ def __main__():
     directory_name = sys.argv[2]
     directory_path = os.path.join(current_directory, directory_name)
     create_directory(directory_path)
+    eval_file_name = 'evaluation.txt'
 
     images_path = sys.argv[3]
-    iterate_images(images_path, model, directory_path)
+    accuracy_param = int(sys.argv[4])
+    iterate_images(images_path, model, directory_path, accuracy_param)
+    read_and_prepare_eval_results(directory_path, eval_file_name, 'result.txt', accuracy_param)
 
-def iterate_images(directory_path, model, eval_dir):
-    # Ensure the directory exists
+def iterate_images(directory_path, model, eval_dir, accuracy_param):
     if not os.path.exists(directory_path) or not os.path.isdir(directory_path):
         print(f"The specified path '{directory_path}' is not a valid directory.")
         return
     
-    # List all files in the directory
     files = os.listdir(directory_path)
     
-    # Filter out only image files (e.g., JPEG, PNG)
     image_files = [file for file in files if file.lower().endswith(('.png', '.jpg', '.jpeg'))]
     
     if not image_files:
@@ -46,15 +46,13 @@ def iterate_images(directory_path, model, eval_dir):
     
     for image_file in image_files:
         try:
-            # print(f"Processing image: {image_file}")
-            eval_rashi_dataset(image_file, directory_path, model, eval_dir)
-            # print(f"Processed image: {image_file}")
+            eval_rashi_dataset(image_file, directory_path, model, eval_dir, accuracy_param)
         except Exception as e:
             print(f"Error processing {image_file}. Reason: {e}")
 
 # specific logic for data from: https://www.kaggle.com/datasets/rashikrahmanpritom/age-recognition-dataset
 # or other images that contains labelled age in the format: AGE_x_y_z.jpg (age must be in the first index separated by '_' sign)
-def eval_rashi_dataset(image_file, dir_path, model, eval_dir):
+def eval_rashi_dataset(image_file, dir_path, model, eval_dir, accuracy_param):
     splitted_text = image_file.split('_')
     labelled_age = splitted_text[0]
     # print(f"file_name: {image_file}, labelled_age: {labelled_age}")
@@ -62,7 +60,9 @@ def eval_rashi_dataset(image_file, dir_path, model, eval_dir):
     predictions = model.predict(img)
     age = round(predictions[0][0])
     difference = int(labelled_age) - age;
-    write_to_text_file(eval_dir, 'evaluation.txt', f'Model:{age}, Label:{labelled_age}, Difference:{str(difference)}')
+    percent_difference = abs(difference) / int(labelled_age) * 100
+    eval_file_name = 'evaluation.txt'
+    write_to_text_file(eval_dir, eval_file_name, f'| Model:{age:3} | Label:{labelled_age:3} | Difference:{str(round(percent_difference)):3} | Accurate:{round(percent_difference) <= accuracy_param:1} |')
 
 def write_to_text_file(dir_path, file_name, content):
     file_path = os.path.join(dir_path, file_name)
@@ -74,6 +74,39 @@ def write_to_text_file(dir_path, file_name, content):
         with open(file_path, 'w') as file:
             file.write(content + '\n')
     
+def read_and_prepare_eval_results(eval_dir, data_file_name, eval_file_name, accuracy_param):
+    data_file = os.path.join(eval_dir, data_file_name)
+    if os.path.exists(data_file):
+        sum_diff = 0
+        accuracy = 0
+        counter = 0
+        with open(data_file, 'r') as file:
+            for line in file:
+                pairs = line.split('|')
+                values = {}
+                for pair in pairs:
+                    if ':' in pair:
+                        key, value = pair.split(':', 1)  # Specify the maximum number of splits
+                        values[key.strip()] = int(value.strip()) if value.strip().isdigit() else value.strip()
+
+                if 'Difference' in values and isinstance(values['Difference'], int):
+                    sum_diff += values['Difference']
+
+                counter += 1
+
+                if 'Accurate' in values and values['Accurate'] == 1:
+                    accuracy += 1
+
+        avg_difference = float(sum_diff / counter) if counter > 0 else 0
+
+        updated_content = f'Average difference: {round(avg_difference, 2)}% Accurate predictions (+/- {accuracy_param}%): {accuracy}/{counter}\n'
+
+        eval_file = os.path.join(eval_dir, eval_file_name)
+        with open(eval_file, 'w') as file:
+            file.write(updated_content)
+    else:
+        print(f'File: {data_file} does not exist')
+        return
 
 def get_image_features(image_path):
     img = image.load_img(image_path, grayscale=True)
@@ -101,10 +134,11 @@ def create_directory(path):
                 print(f"Failed to delete {file_path}. Reason: {e}")
 
 def usage():
-    print("Proper usage is: python model-eval.py [model_name] [directory_name_to_save_files] [path_to_eval_images]")
+    print("Proper usage is: python model-eval.py [model_name] [directory_name_to_save_files] [path_to_eval_images] [accuracy_param]")
     print("[model_name] - name of the model you want to use to evaluate your data")
     print("[directory_name_to_save_files] - name of the directory in the current directory which will be created and .txt file with results will be saved into")
     print("[path_to_eval_images] - absolute path to the directory containing images to be evaluated")
+    print("[accuracy_param] defines the maximum percentage difference of predicted and labelled age to be recognized as accurate prediction")
 
 if __name__ == "__main__":
     __main__()
