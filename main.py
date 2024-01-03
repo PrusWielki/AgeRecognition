@@ -22,7 +22,7 @@ face_cascade = cv2.CascadeClassifier('FaceRecognition/haarsascade_frontalface_de
 facetracker = load_model('FaceRecognition\\facetracker.keras')
 target_directory = "face_photos"
 selected_option = None
-previous_age = None
+previous_age = np.zeros(100)
 detector = cv2.FaceDetectorYN()
 yuNetModel = cv2.FaceDetectorYN.create(
             model='face_detection_yunet_2023mar.onnx',
@@ -90,21 +90,25 @@ def detect_faces_yunet(image):
 
 def save_images(image_array):
     # Create the target directory if it doesn't exist
-    if not os.path.exists(target_directory):
-        os.makedirs(target_directory)
-    else:
-        # If the directory exists, delete all existing photos
-        file_list = os.listdir(target_directory)
-        for file_name in file_list:
-            file_path = os.path.join(target_directory, file_name)
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
+    try:
+        if not os.path.exists(target_directory):
+            os.makedirs(target_directory)
+        else:
+            # If the directory exists, delete all existing photos
+            file_list = os.listdir(target_directory)
+            for file_name in file_list:
+                file_path = os.path.join(target_directory, file_name)
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
 
-    # Save the new images in the target directory
-    for i, image in enumerate(image_array):
-        Image.fromarray(image.astype(np.uint8)).save(os.path.join(target_directory, f"image_{i}.png"))
+        # Save the new images in the target directory
+        for i, image in enumerate(image_array):
+            Image.fromarray(image.astype(np.uint8)).save(os.path.join(target_directory, f"image_{i}.png"))
+    except:
+        print("there was an error saving image")
+
 
 def cut_photo(image, size, coordinates):
     left, top, right, bottom = coordinates
@@ -130,19 +134,25 @@ def show_rectangle(frame, sample_coords, size):
                   tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
                                [0, -30])),
                   tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
-                               [150, 0])),
+                               [50, 0])),
                   (255, 0, 0), -1)
 
 def calculate_age(sample_coords, size, i):
-    img_path = os.path.join(target_directory, f"image_{i}.png")
-    age = AgeDetectionClass.predict_age(img_path, sample_coords, size)
+    try:
+        img_path = os.path.join(target_directory, f"image_{i}.png")
+        age = AgeDetectionClass.predict_age(img_path, sample_coords, size)
 
-    global previous_age
-    previous_age = age
+        global previous_age
+        previous_age[i] = age
+    except:
+        print("there was no image")
+        return 0
 
-def show_age(frame, sample_coords, size, i):
+    return age
+
+def show_age(frame, sample_coords, size, i, age):
     # Controls the text rendered
-    cv2.putText(frame, f'age: {previous_age}', tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
+    cv2.putText(frame, f'{age}', tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
                                             [0, -5])),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
@@ -170,6 +180,8 @@ def update_view(frame, calculateAge = True):
     elif current_option == 3:
         faces = detect_faces_yunet(frame)
 
+    global previous_age
+
     if showFrame:
         for sample_coords in faces:
             show_rectangle(frame, sample_coords, size)
@@ -177,10 +189,12 @@ def update_view(frame, calculateAge = True):
 
         save_images(images)
 
+        if calculateAge:
+            previous_age = list(range(100))
+
         for i, sample_coords in enumerate(faces):
-            if calculateAge:
-                calculate_age(sample_coords, size, i)
-            show_age(frame, sample_coords, size, i)
+            age = calculate_age(sample_coords, size, i)
+            show_age(frame, sample_coords, size, i, age)
 
     cv2.imshow('EyeTrack', frame)
 
@@ -194,7 +208,7 @@ def show_video(cap):
 
         cv2.setWindowProperty('EyeTrack', cv2.WND_PROP_AUTOSIZE, cv2.WINDOW_NORMAL)
 
-        if (i > 6):
+        if (i > 21):
             calculateAge = True
             i = 0
         else:
@@ -300,6 +314,7 @@ if __name__ == '__main__':
     # Create the main application window
 
     # init_model_yunet()
+
     setup_main()
     # Start the Tkinter main loop
     root.mainloop()
