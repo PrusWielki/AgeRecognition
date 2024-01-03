@@ -22,7 +22,7 @@ face_cascade = cv2.CascadeClassifier('FaceRecognition/haarsascade_frontalface_de
 facetracker = load_model('FaceRecognition\\facetracker.keras')
 target_directory = "face_photos"
 selected_option = None
-previous_age = None
+previous_age = np.zeros(100)
 detector = cv2.FaceDetectorYN()
 
 def str2bool(v):
@@ -119,11 +119,13 @@ def calculate_age(sample_coords, size, i):
     age = AgeDetectionClass.predict_age(img_path, sample_coords, size)
 
     global previous_age
-    previous_age = age
+    previous_age[i] = age
 
-def show_age(frame, sample_coords, size, i):
+    return age
+
+def show_age(frame, sample_coords, size, i, age):
     # Controls the text rendered
-    cv2.putText(frame, f'age: {previous_age}', tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
+    cv2.putText(frame, f'age: {age}', tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
                                             [0, -5])),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
@@ -149,6 +151,8 @@ def update_view(frame, calculateAge = True):
         faces.append(yhat[1][0])
         showFrame = yhat[0] > 0.5
 
+    global previous_age
+
     if showFrame:
         for sample_coords in faces:
             show_rectangle(frame, sample_coords, size)
@@ -156,10 +160,12 @@ def update_view(frame, calculateAge = True):
 
         save_images(images)
 
+        if calculateAge:
+            previous_age = list(range(100))
+
         for i, sample_coords in enumerate(faces):
-            if calculateAge:
-                calculate_age(sample_coords, size, i)
-            show_age(frame, sample_coords, size, i)
+            age = calculate_age(sample_coords, size, i)
+            show_age(frame, sample_coords, size, i, age)
 
     cv2.imshow('EyeTrack', frame)
 
@@ -173,7 +179,7 @@ def show_video(cap):
 
         cv2.setWindowProperty('EyeTrack', cv2.WND_PROP_AUTOSIZE, cv2.WINDOW_NORMAL)
 
-        if (i > 6):
+        if (i > 21):
             calculateAge = True
             i = 0
         else:
@@ -279,6 +285,7 @@ if __name__ == '__main__':
     # Create the main application window
 
     # init_model_yunet()
+
     setup_main()
     # Start the Tkinter main loop
     root.mainloop()
