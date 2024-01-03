@@ -24,6 +24,15 @@ target_directory = "face_photos"
 selected_option = None
 previous_age = np.zeros(100)
 detector = cv2.FaceDetectorYN()
+yuNetModel = cv2.FaceDetectorYN.create(
+            model='face_detection_yunet_2023mar.onnx',
+            config="",
+            input_size=[320, 320],
+            score_threshold=0.9,
+            nms_threshold=0.3,
+            top_k=5000,
+            backend_id=cv2.dnn.DNN_BACKEND_OPENCV,
+            target_id=cv2.dnn.DNN_TARGET_CPU)
 
 def str2bool(v):
     if v.lower() in ['on', 'yes', 'true', 'y', 't']:
@@ -68,6 +77,16 @@ def detect_faces_haarcascade(image):
     
     return face_coordinates
 
+def detect_faces_yunet(image):
+    h, w, _ = image.shape
+    yuNetModel.setInputSize([w, h])
+    faces = yuNetModel.detect(image)
+    face_coordinates = []
+    if faces[1] is not None:
+        for det in faces[1]:
+            bbox = det[0:4].astype(np.int32)
+            face_coordinates.append([bbox[0]/w,bbox[1]/h,(bbox[0]+bbox[2])/w,(bbox[1]+bbox[3])/h])
+    return face_coordinates
 
 def save_images(image_array):
     # Create the target directory if it doesn't exist
@@ -150,6 +169,8 @@ def update_view(frame, calculateAge = True):
         yhat = facetracker.predict(np.expand_dims(resized / 255, 0))
         faces.append(yhat[1][0])
         showFrame = yhat[0] > 0.5
+    elif current_option == 3:
+        faces = detect_faces_yunet(frame)
 
     global previous_age
 
@@ -274,8 +295,8 @@ def setup_main():
     radio1 = tk.Radiobutton(button_frame, text="Haarcascade", variable=selected_option, value=1)
     radio1.grid(row=2, column=1, padx=10, pady=10)
 
-    # radio2 = tk.Radiobutton(button_frame, text="YuNet", variable=selected_option, value=2)
-    # radio2.grid(row=3, column=1, padx=10, pady=10)
+    radio2 = tk.Radiobutton(button_frame, text="YuNet", variable=selected_option, value=3)
+    radio2.grid(row=3, column=1, padx=10, pady=10)
 
     radio3 = tk.Radiobutton(button_frame, text="Our own model", variable=selected_option, value=2)
     radio3.grid(row=4, column=1, padx=10, pady=10)
