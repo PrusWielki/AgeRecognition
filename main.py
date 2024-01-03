@@ -90,21 +90,25 @@ def detect_faces_yunet(image):
 
 def save_images(image_array):
     # Create the target directory if it doesn't exist
-    if not os.path.exists(target_directory):
-        os.makedirs(target_directory)
-    else:
-        # If the directory exists, delete all existing photos
-        file_list = os.listdir(target_directory)
-        for file_name in file_list:
-            file_path = os.path.join(target_directory, file_name)
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
+    try:
+        if not os.path.exists(target_directory):
+            os.makedirs(target_directory)
+        else:
+            # If the directory exists, delete all existing photos
+            file_list = os.listdir(target_directory)
+            for file_name in file_list:
+                file_path = os.path.join(target_directory, file_name)
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
 
-    # Save the new images in the target directory
-    for i, image in enumerate(image_array):
-        Image.fromarray(image.astype(np.uint8)).save(os.path.join(target_directory, f"image_{i}.png"))
+        # Save the new images in the target directory
+        for i, image in enumerate(image_array):
+            Image.fromarray(image.astype(np.uint8)).save(os.path.join(target_directory, f"image_{i}.png"))
+    except:
+        print("there was an error saving image")
+
 
 def cut_photo(image, size, coordinates):
     left, top, right, bottom = coordinates
@@ -130,21 +134,25 @@ def show_rectangle(frame, sample_coords, size):
                   tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
                                [0, -30])),
                   tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
-                               [150, 0])),
+                               [50, 0])),
                   (255, 0, 0), -1)
 
 def calculate_age(sample_coords, size, i):
-    img_path = os.path.join(target_directory, f"image_{i}.png")
-    age = AgeDetectionClass.predict_age(img_path, sample_coords, size)
+    try:
+        img_path = os.path.join(target_directory, f"image_{i}.png")
+        age = AgeDetectionClass.predict_age(img_path, sample_coords, size)
 
-    global previous_age
-    previous_age[i] = age
+        global previous_age
+        previous_age[i] = age
+    except:
+        print("there was no image")
+        return 0
 
     return age
 
 def show_age(frame, sample_coords, size, i, age):
     # Controls the text rendered
-    cv2.putText(frame, f'age: {age}', tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
+    cv2.putText(frame, f'{age}', tuple(np.add(np.multiply(sample_coords[:2], [size, size]).astype(int),
                                             [0, -5])),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
