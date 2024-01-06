@@ -84,6 +84,19 @@ Przy aktywowanym środowisku należy wywołać komendę:
 ```
 Po tej operacji zostanie utworzony kernel jupytera dla środowiska wirtualnego.
 
+## Odpalenie serwera MLFlow
+Żeby włączyć serwer MLFlow, należy użyć komendy
+```
+(my_env) > mlflow ui --backend-store-uri sqlite:///mlflow.db
+```
+gdzie mlflow.db jest naszą bazą, w której wszystko będzie trzymane. MLFlow pozwala nam zapisywać
+eksperymenty oraz modele oraz je ponownie ładować. Jak włączymy nasz serwer
+to wtedy powinien nam się pojawić w CMD tekst:
+```
+INFO:waitress:Serving on http://127.0.0.1:5000
+```
+Odpalamy ten serwer w przeglądarce i możemy już go używać
+
 ## Sprawdzenie czy konfiguracja środowiska przebiegła pomyślnie
 Należy wywołać komendę w głównym katalogu repozytorium:
 ```
