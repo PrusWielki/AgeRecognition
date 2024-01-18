@@ -9,6 +9,20 @@ import time
 
 current_directory = os.getcwd()
 
+# global dict for age groups
+age_ranges_dict = {
+    '6-10': 0.0,
+    '11-20': 0.0,
+    '21-30': 0.0,
+    '31-40': 0.0,
+    '41-50': 0.0,
+    '51-60': 0.0,
+    '61-70': 0.0,
+    '71-80': 0.0,
+    '81-90': 0.0,
+    '91-100': 0.0
+}
+
 def __main__():
     if len(sys.argv) != 5:
         print(f"length: {len(sys.argv)}, argv: {sys.argv}")
@@ -59,10 +73,10 @@ def eval_rashi_dataset(image_file, dir_path, model, eval_dir, accuracy_param):
     img = get_image_features(os.path.join(dir_path, image_file))
     predictions = model.predict(img)
     age = round(predictions[0][0])
-    difference = int(labelled_age) - age;
-    percent_difference = abs(difference) / int(labelled_age) * 100
+    difference = abs(int(labelled_age) - age);
+    percent_difference = abs(int(difference)) / int(labelled_age) * 100
     eval_file_name = 'evaluation.txt'
-    write_to_text_file(eval_dir, eval_file_name, f'| Model:{age:3} | Label:{labelled_age:3} | Difference:{str(round(percent_difference)):3} | Accurate:{round(percent_difference) <= accuracy_param:1} |')
+    write_to_text_file(eval_dir, eval_file_name, f'| Model:{age:3} | Label:{labelled_age:3} | Difference:{difference} | PercentageDifference:{str(round(percent_difference)):3} | Accurate:{round(percent_difference) <= accuracy_param:1} |')
 
 def write_to_text_file(dir_path, file_name, content):
     file_path = os.path.join(dir_path, file_name)
@@ -73,11 +87,13 @@ def write_to_text_file(dir_path, file_name, content):
     else:
         with open(file_path, 'w') as file:
             file.write(content + '\n')
-    
+
+# read a file in a specific format and calculate errors
 def read_and_prepare_eval_results(eval_dir, data_file_name, eval_file_name, accuracy_param):
     data_file = os.path.join(eval_dir, data_file_name)
     if os.path.exists(data_file):
         sum_diff = 0
+        sum_diff_percentage = 0
         accuracy = 0
         counter = 0
         with open(data_file, 'r') as file:
@@ -87,19 +103,24 @@ def read_and_prepare_eval_results(eval_dir, data_file_name, eval_file_name, accu
                 for pair in pairs:
                     if ':' in pair:
                         key, value = pair.split(':', 1)  # Specify the maximum number of splits
+                        # print(f'key: {key}, value: {value}')
                         values[key.strip()] = int(value.strip()) if value.strip().isdigit() else value.strip()
 
-                if 'Difference' in values and isinstance(values['Difference'], int):
-                    sum_diff += values['Difference']
+                if 'Difference' in values:
+                    sum_diff += int(values['Difference'])
+
+                if 'PercentageDifference' in values and isinstance(values['PercentageDifference'], int):
+                    sum_diff_percentage += values['PercentageDifference']
 
                 counter += 1
 
                 if 'Accurate' in values and values['Accurate'] == 1:
                     accuracy += 1
 
-        avg_difference = float(sum_diff / counter) if counter > 0 else 0
+        average_difference = sum_diff / counter if counter > 0 else 0
+        avg_difference_percentage = float(sum_diff_percentage / counter) if counter > 0 else 0
 
-        updated_content = f'Average difference: {round(avg_difference, 2)}% Accurate predictions (+/- {accuracy_param}%): {accuracy}/{counter}\n'
+        updated_content = f'Average Difference: {average_difference} Average Percentage Difference: {round(avg_difference_percentage, 2)}% Accurate predictions (+/- {accuracy_param}%): {accuracy}/{counter}\n'
 
         eval_file = os.path.join(eval_dir, eval_file_name)
         with open(eval_file, 'w') as file:
@@ -107,7 +128,7 @@ def read_and_prepare_eval_results(eval_dir, data_file_name, eval_file_name, accu
     else:
         print(f'File: {data_file} does not exist')
         return
-
+        
 def get_image_features(image_path):
     img = image.load_img(image_path, grayscale=True)
     img = img.resize((128, 128), Image.LANCZOS)
