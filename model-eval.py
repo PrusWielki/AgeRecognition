@@ -67,14 +67,16 @@ def iterate_images(directory_path, model, eval_dir, accuracy_param):
 # specific logic for data from: https://www.kaggle.com/datasets/rashikrahmanpritom/age-recognition-dataset
 # or other images that contains labelled age in the format: AGE_x_y_z.jpg (age must be in the first index separated by '_' sign)
 def eval_rashi_dataset(image_file, dir_path, model, eval_dir, accuracy_param):
-    splitted_text = image_file.split('_')
-    labelled_age = splitted_text[0]
-    # print(f"file_name: {image_file}, labelled_age: {labelled_age}")
     img = get_image_features(os.path.join(dir_path, image_file))
+
     predictions = model.predict(img)
     age = round(predictions[0][0])
+
+    splitted_text = image_file.split('_')
+    labelled_age = splitted_text[0]
     difference = abs(int(labelled_age) - age);
     percent_difference = abs(int(difference)) / int(labelled_age) * 100
+    
     eval_file_name = 'evaluation.txt'
     write_to_text_file(eval_dir, eval_file_name, f'| Model:{age:3} | Label:{labelled_age:3} | Difference:{difference} | PercentageDifference:{str(round(percent_difference)):3} | Accurate:{round(percent_difference) <= accuracy_param:1} |')
 
@@ -122,9 +124,7 @@ def read_and_prepare_eval_results(eval_dir, data_file_name, eval_file_name, accu
 
         updated_content = f'Average Difference: {average_difference} Average Percentage Difference: {round(avg_difference_percentage, 2)}% Accurate predictions (+/- {accuracy_param}%): {accuracy}/{counter}\n'
 
-        eval_file = os.path.join(eval_dir, eval_file_name)
-        with open(eval_file, 'w') as file:
-            file.write(updated_content)
+        write_to_text_file(eval_dir, eval_file_name, updated_content)
     else:
         print(f'File: {data_file} does not exist')
         return
@@ -153,6 +153,9 @@ def create_directory(path):
                     shutil.rmtree(file_path)
             except Exception as e:
                 print(f"Failed to delete {file_path}. Reason: {e}")
+
+def create_histogram():
+    return
 
 def usage():
     print("Proper usage is: python model-eval.py [model_name] [directory_name_to_save_files] [path_to_eval_images] [accuracy_param]")
