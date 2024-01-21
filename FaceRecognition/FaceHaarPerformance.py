@@ -24,7 +24,7 @@ if __name__ == '__main__':
                 face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
     
                 # Detect faces in the image
-                faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(20, 20))
+                faces = face_cascade.detectMultiScale(gray, scaleFactor=1.01, minNeighbors=5, minSize=(20, 20))
     
                 if len(faces)>0:
                     noOfFacesDetected = noOfFacesDetected+1
