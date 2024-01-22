@@ -1,5 +1,13 @@
 # AgeRecognition
 
+### Pobranie repozytorium
+
+Na samym początku pobieramy repozytorium:
+```
+git clone https://github.com/HaZeL-spc/AgeRecognition.git
+```
+**Wszystkie** następne komendy zapisujemy w katalogu repozytorium pobranego na naszym komputerze
+
 ### Instalacja pythona 3.11.0
 
 Tutaj sposób instalacji będzie zależał od systemu operacyjnego, generalnie pod tym linkiem można się dowiedzieć jak zainstalować pythona na swojej maszynie ⇒ https://www.python.org/  
@@ -24,13 +32,14 @@ pip install virtualenv
 
 ### Utworzyć środowisko wirtualne
 
-W katalogu, którym znaleźliście się należy wykonać komendę:
-```
-> python -m venv my_env
-```
 Jeśli Python --version nie daje nam 3.11.0 wpisuję ścieżkę do python.exe zamiast python np.:
 ```
 > C:\Users\MyUser\AppData\Local\Programs\Python\Python311\python.exe -m venv my_env
+```
+
+Natomiast w przeciwnym wypadku należy wykonać komendę:
+```
+> python -m venv my_env
 ```
 
 
@@ -57,6 +66,16 @@ W katalogu, w którym się znajdujecie jest plik `requirements.txt`. Zawiera on 
 (my_env) > pip install -r requirements.txt
 ```
 
+## 1. Instrukcja dla użytkownika
+
+Żeby włączyć program musimy użyć komendy
+
+```
+(my_env) > python main.py
+```
+
+## 2. Instrukcja dla developera
+
 ### Instalacja kernela dla utworzonego środowiska
 
 Przy aktywowanym środowisku należy wywołać komendę:
@@ -64,6 +83,19 @@ Przy aktywowanym środowisku należy wywołać komendę:
 (my_env) > ipython kernel install --user --name=my_env
 ```
 Po tej operacji zostanie utworzony kernel jupytera dla środowiska wirtualnego.
+
+## Odpalenie serwera MLFlow
+Żeby włączyć serwer MLFlow, należy użyć komendy
+```
+(my_env) > mlflow ui --backend-store-uri sqlite:///mlflow.db
+```
+gdzie mlflow.db jest naszą bazą, w której wszystko będzie trzymane. MLFlow pozwala nam zapisywać
+eksperymenty oraz modele oraz je ponownie ładować. Jak włączymy nasz serwer
+to wtedy powinien nam się pojawić w CMD tekst:
+```
+INFO:waitress:Serving on http://127.0.0.1:5000
+```
+Odpalamy ten serwer w przeglądarce i możemy już go używać
 
 ## Sprawdzenie czy konfiguracja środowiska przebiegła pomyślnie
 Należy wywołać komendę w głównym katalogu repozytorium:
