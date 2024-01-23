@@ -2,8 +2,8 @@ import os
 import shutil
 import random
 
-def move_images(folder):
-    source_images_dir = os.path.join(folder, 'UTKFace')
+def move_images(folder, folderUTK):
+    source_images_dir = os.path.join(folder, str(folderUTK))
 
     train_images_dir = os.path.join(folder, 'Train')
     test_images_dir = os.path.join(folder, 'Test')
