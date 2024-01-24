@@ -1,1 +1,0 @@
-Average difference: 24.51% Accurate predictions (+/- 20%): 5567/9097
