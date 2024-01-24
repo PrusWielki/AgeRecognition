@@ -165,3 +165,8 @@ cython_debug/
 .idea/
 
 face_photos/
+frame_photos/
+UTKFace/
+DarkerImages
+BrighterImages
+ErasedImages
