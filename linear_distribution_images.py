@@ -86,5 +86,3 @@ def delete_photos_linear(folder):
 if __name__ == "__main__":
     # augmentate_data("C:\\Users\\kacpe\\OneDrive\\Pulpit\\Uczelnia\\semestr5\\MachineLearning\\UTKFace")
     delete_photos_linear('C:\\Users\\kacpe\\OneDrive\\Pulpit\\Uczelnia\\semestr5\\MachineLearning\\UTKFace')
-
-

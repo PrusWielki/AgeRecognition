@@ -66,25 +66,23 @@ def delete_photos_linear(folder):
     min_photos = min(my_dict_ages.values())
     my_dict_ages_new = defaultdict(int)
 
-    # for i, image in enumerate(all_images):
-    #     image_age = int(image.split("_")[0])//10
-    #     if (image_age >= 7):
-    #         image_age = 7
-    #
-    #     print(i)
-    #
-    #     my_dict_ages_new[image_age] += 1
-    #     if (my_dict_ages_new[image_age] > min_photos):
-    #         image_file_name = os.path.join("UTKFace\\AugmentedUTKFace", image)
-    #         if os.path.isfile(image_file_name):
-    #             # Delete the file
-    #             os.remove(image_file_name)
-    #         else:
-    #             print("Error: %s file not found" % image)
+    for i, image in enumerate(all_images):
+        image_age = int(image.split("_")[0])//10
+        if (image_age >= 7):
+            image_age = 7
+    
+        print(i)
+    
+        my_dict_ages_new[image_age] += 1
+        if (my_dict_ages_new[image_age] > min_photos):
+            image_file_name = os.path.join("UTKFace\\AugmentedUTKFace", image)
+            if os.path.isfile(image_file_name):
+                # Delete the file
+                os.remove(image_file_name)
+            else:
+                print("Error: %s file not found" % image)
 
 
 if __name__ == "__main__":
     # augmentate_data("C:\\Users\\kacpe\\OneDrive\\Pulpit\\Uczelnia\\semestr5\\MachineLearning\\UTKFace")
     delete_photos_linear('C:\\Users\\kacpe\\OneDrive\\Pulpit\\Uczelnia\\semestr5\\MachineLearning\\UTKFace')
-
-
