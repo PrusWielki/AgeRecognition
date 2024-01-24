@@ -7,11 +7,6 @@ from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
 import numpy as np
 from PIL import Image
 
-<<<<<<< HEAD
-def delete_photos_linear(folder):
-    source_images_dir = os.path.join(folder, 'UTKFace')
-    all_images = os.listdir(source_images_dir)
-=======
 def augmentate_data(folder):
     source_images_dir = os.path.join(folder, 'UTKFace')
     all_images = os.listdir(source_images_dir)
@@ -55,7 +50,6 @@ def augmentate_data(folder):
 def delete_photos_linear(folder):
     source_images_dir = os.path.join(folder, 'AugmentedUTKFace')
     all_images = os.listdir(source_images_dir)
->>>>>>> 271e2648754b3ce76fe778c7f7448a5262dd9c67
     random.shuffle(all_images)
 
     my_dict_ages = defaultdict(int)
@@ -72,27 +66,6 @@ def delete_photos_linear(folder):
     min_photos = min(my_dict_ages.values())
     my_dict_ages_new = defaultdict(int)
 
-<<<<<<< HEAD
-    for i, image in enumerate(all_images):
-        image_age = int(image.split("_")[0])//10
-        if (image_age >= 7):
-            image_age = 7
-    
-        print(i)
-    
-        my_dict_ages_new[image_age] += 1
-        if (my_dict_ages_new[image_age] > min_photos):
-            image_file_name = os.path.join("UTKFace", image)
-            if os.path.isfile(image_file_name):
-                # Delete the file
-                os.remove(image_file_name)
-            else:
-                print("Error: %s file not found" % image)
-
-if __name__ == '__main__':
-    baseDir = 'C:\\Users\\User\\Desktop\\Szkoła\\MachineLearning\\AgeRecognition'
-    delete_photos_linear(baseDir)
-=======
     # for i, image in enumerate(all_images):
     #     image_age = int(image.split("_")[0])//10
     #     if (image_age >= 7):
@@ -113,6 +86,3 @@ if __name__ == '__main__':
 if __name__ == "__main__":
     # augmentate_data("C:\\Users\\kacpe\\OneDrive\\Pulpit\\Uczelnia\\semestr5\\MachineLearning\\UTKFace")
     delete_photos_linear('C:\\Users\\kacpe\\OneDrive\\Pulpit\\Uczelnia\\semestr5\\MachineLearning\\UTKFace')
-
-
->>>>>>> 271e2648754b3ce76fe778c7f7448a5262dd9c67
